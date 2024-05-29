@@ -9,8 +9,45 @@
     <title>Document</title>
   </head>
   <body>
-    <h1>Hello World!</h1>
-    <h2><%= 2+2 %></h2>
+    <div class="main w-full min-h-screen bg-zinc-900 text-white">
+      <div class="form p-10">
+        <form action="/create" method="post">
+          <input
+            class="block rounded-lg w-full px-5 py-2 mb-2 bg-zinc-800"
+            type="text"
+            placeholder="Enter the title"
+            name="title"
+          />
+          <textarea
+            class="block rounded-lg w-full px-5 py-2 bg-zinc-800 resize-none"
+            placeholder="Write the task"
+            name="detail"
+          ></textarea>
+          <button class="mt-2 bg-zinc-600 px-5 py-2 rounded-lg" type="submit">
+            Create Task
+          </button>
+        </form>
+      </div>
+      <div class="tasks p-10 flex gap-4 flex-wrap">
+        <% if(files.length > 0) { %> <% files.forEach(function(val) { %>
+        <div class="task w-72 px-5 py-4 bg-zinc-800 rounded-lg">
+          <h1 class="text-3xl tracking-tighter">Some Task go here</h1>
+          <a href="" class="text-blue-600 inline-block mt-2">Read More...</a>
+        </div>
+        <%})%> <% } else { %>
+        <h3>No task here</h3>
+        <% } %>
+
+        <!--  <div class="task w-72 hidden px-5 py-4 bg-zinc-800 rounded-lg">
+          <h1 class="text-3xl tracking-tighter">Some Task go here</h1>
+          <a href="" class="text-blue-600 inline-block mt-2">Read More...</a>
+        </div>
+        <div class="task w-72 hidden px-5 py-4 bg-zinc-800 rounded-lg">
+          <h1 class="text-3xl tracking-tighter">Some Task go here</h1>
+          <a href="" class="text-blue-600 inline-block mt-2">Read More...</a>
+        </div> -->
+      </div>
+    </div>
 
     <script src="/javascripts/script.js"></script>
   </body>
