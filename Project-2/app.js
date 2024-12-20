@@ -107,9 +107,46 @@ app.get("/logout", (req, res) => {
 });
 
 app.get("/profile", isLoggedIn, async (req, res) => {
-  let user = await userModel.findOne({ email: req.user.email });
+  let user = await userModel
+    .findOne({ email: req.user.email })
+    .populate("posts");
   console.log(user);
   res.render("profile", { user }); // Render the profile page with user data
+});
+
+app.post("/post", isLoggedIn, async (req, res) => {
+  try {
+    // Find the user based on the email in the token
+    let user = await userModel.findOne({ email: req.user.email });
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    // Validate content
+    let { content } = req.body;
+    if (!content || content.trim() === "") {
+      return res.status(400).send("Post content cannot be empty");
+    }
+
+    // Create the post
+    let post = await postModel.create({
+      user: user._id,
+      content,
+    });
+
+    // Add the post to the user's posts array and save
+    if (!user.posts) {
+      user.posts = [];
+    }
+    user.posts.push(post._id);
+    await user.save();
+
+    // Redirect to profile page
+    res.redirect("/profile");
+  } catch (error) {
+    console.error("Error in /post route:", error);
+    res.status(500).send("Internal server error");
+  }
 });
 
 function isLoggedIn(req, res, next) {
