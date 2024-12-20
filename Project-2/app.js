@@ -90,7 +90,7 @@ app.post("/login", async (req, res) => {
       if (result) {
         let token = jwt.sign({ email: email, userid: user._id }, "shonty");
         res.cookie("token", token);
-        return res.status(200).send("Login Successful");
+        return res.status(200).redirect("/profile");
       } else {
         return res.status(401).send("Invalid email or password");
       }
@@ -106,18 +106,28 @@ app.get("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-app.get("/profile", isLoggedIn, (req, res) => {
-  console.log(req.user);
-  res.redirect("profile");
+app.get("/profile", isLoggedIn, async (req, res) => {
+  let user = await userModel.findOne({ email: req.user.email });
+  console.log(user);
+  res.render("profile", { user }); // Render the profile page with user data
 });
 
 function isLoggedIn(req, res, next) {
-  if (req.cookies.token === "") {
-    res.send("You must be logged in");
-  } else {
-    let data = jwt.verify(req.cookies.token, "shonty");
+  const token = req.cookies.token;
+  console.log("Token received:", token);
+
+  if (!token) {
+    console.log("No token provided");
+    return res.redirect("/login");
+  }
+
+  try {
+    const data = jwt.verify(token, "shonty");
     req.user = data;
     next();
+  } catch (err) {
+    console.error("Error verifying token:", err.message);
+    res.redirect("/login");
   }
 }
 
