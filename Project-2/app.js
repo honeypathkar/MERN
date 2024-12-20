@@ -106,6 +106,25 @@ app.get("/logout", (req, res) => {
   res.redirect("/login");
 });
 
+function isLoggedIn(req, res, next) {
+  const token = req.cookies.token;
+  console.log("Token received:", token);
+
+  if (!token) {
+    console.log("No token provided");
+    return res.redirect("/login");
+  }
+
+  try {
+    const data = jwt.verify(token, "shonty");
+    req.user = data;
+    next();
+  } catch (err) {
+    console.error("Error verifying token:", err.message);
+    res.redirect("/login");
+  }
+}
+
 app.get("/profile", isLoggedIn, async (req, res) => {
   let user = await userModel
     .findOne({ email: req.user.email })
@@ -149,23 +168,41 @@ app.post("/post", isLoggedIn, async (req, res) => {
   }
 });
 
-function isLoggedIn(req, res, next) {
-  const token = req.cookies.token;
-  console.log("Token received:", token);
-
-  if (!token) {
-    console.log("No token provided");
-    return res.redirect("/login");
+app.get("/like/:id", isLoggedIn, async (req, res) => {
+  let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+  if (post.likes.indexOf(req.user.userid) === -1) {
+    post.likes.push(req.user.userid);
+  } else {
+    post.likes.splice(post.likes.indexOf(req.user.userid), 1);
   }
+  await post.save();
+  res.redirect("/profile");
+});
 
+app.get("/edit/:id", isLoggedIn, async (req, res) => {
+  let post = await postModel.findOne({ _id: req.params.id }).populate("user");
+  res.render("edit", { post });
+});
+
+app.post("/update/:id", isLoggedIn, async (req, res) => {
   try {
-    const data = jwt.verify(token, "shonty");
-    req.user = data;
-    next();
-  } catch (err) {
-    console.error("Error verifying token:", err.message);
-    res.redirect("/login");
+    const { content } = req.body;
+
+    if (!content || content.trim() === "") {
+      return res.status(400).send("Content cannot be empty");
+    }
+
+    await postModel.findOneAndUpdate(
+      { _id: req.params.id },
+      { content },
+      { new: true }
+    );
+
+    res.redirect("/profile");
+  } catch (error) {
+    console.error("Error in /update/:id route:", error);
+    res.status(500).send("Internal server error");
   }
-}
+});
 
 app.listen(3000, () => console.log("Port running on localhost:3000"));
